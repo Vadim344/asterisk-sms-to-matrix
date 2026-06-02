@@ -1,0 +1,32 @@
+#!/bin/bash
+
+# ============================================================
+# AGI wrapper — Asterisk 16.30 + FreePBX + chan_dongle
+# Файл: /var/lib/asterisk/sms_gateway/asterisk_sms_to_matrix.agi
+# ============================================================
+# AGI передаёт аргументы НЕ через командную строку, а через
+# stdin в формате agi_arg_N: значение.
+# Этот wrapper парсит stdin, извлекает аргументы и вызывает
+# основной скрипт.
+# ============================================================
+
+# Парсим AGI environment из stdin
+# Формат: переменная: значение, завершается пустой строкой
+SENDER=""
+DATETIME=""
+MESSAGE=""
+
+while IFS= read -r line; do
+    line="${line%%$'\r'}"          # удаляем \r (Windows-перевод строк)
+    [[ -z "$line" ]] && break       # пустая строка = конец environment
+
+    case "$line" in
+        # agi_arg_1 = sender number, agi_arg_2 = datetime, agi_arg_3 = message text
+        agi_arg_1:*)  SENDER="${line#agi_arg_1: }"  ;;
+        agi_arg_2:*)  DATETIME="${line#agi_arg_2: }" ;;
+        agi_arg_3:*)  MESSAGE="${line#agi_arg_3: }"  ;;
+    esac
+done
+
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+exec "${SCRIPT_DIR}/asterisk_sms_to_matrix.sh" "$SENDER" "$DATETIME" "$MESSAGE" </dev/null
