@@ -1,4 +1,4 @@
-# AsterMatrix
+# asterisk-sms-to-matrix
 
 Пересылка входящих SMS с GSM-донгла (chan_dongle) в комнату Matrix (Element) через Asterisk.
 
@@ -16,8 +16,8 @@
 ## Быстрая установка (CentOS)
 
 ```bash
-git clone <repo> astermatrix
-cd astermatrix
+git clone https://github.com/Vadim344/asterisk-sms-to-matrix.git
+cd asterisk-sms-to-matrix
 sudo bash setup_centos.sh
 ```
 

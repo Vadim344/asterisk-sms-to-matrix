@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # ============================================================
-# Установка AsterMatrix на CentOS 7/8 + FreePBX + Asterisk 16
+# Установка asterisk-sms-to-matrix на CentOS 7/8 + FreePBX + Asterisk 16
 # Запуск от root: sudo bash setup_centos.sh
 # ============================================================
 
@@ -32,7 +32,7 @@ INSTALL_DIR="/var/lib/asterisk/sms_gateway"
 LOG_DIR="/var/log/asterisk"
 
 echo "========================================="
-echo "  AsterMatrix — Установка на CentOS"
+echo "  asterisk-sms-to-matrix — установка на CentOS"
 echo "========================================="
 echo ""
 
