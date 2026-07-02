@@ -4,29 +4,34 @@
 # AGI wrapper — Asterisk 16.30 + FreePBX + chan_dongle
 # Файл: /var/lib/asterisk/sms_gateway/asterisk_sms_to_matrix.agi
 # ============================================================
-# AGI передаёт аргументы НЕ через командную строку, а через
-# stdin в формате agi_arg_N: значение.
-# Этот wrapper парсит stdin, извлекает аргументы и вызывает
-# основной скрипт.
+# AGI передаёт аргументы через stdin в формате agi_arg_N: значение.
+# Asterisk разделяет аргументы по запятым, поэтому если SMS
+# содержит запятую, она разбивается на agi_arg_3, agi_arg_4 и т.д.
+# Этот wrapper склеивает все части обратно.
 # ============================================================
 
-# Парсим AGI environment из stdin
-# Формат: переменная: значение, завершается пустой строкой
 SENDER=""
 DATETIME=""
-MESSAGE=""
+MESSAGE_PARTS=()
 
 while IFS= read -r line; do
-    line="${line%%$'\r'}"          # удаляем \r (Windows-перевод строк)
-    [[ -z "$line" ]] && break       # пустая строка = конец environment
+    line="${line%%$'\r'}"
+    [[ -z "$line" ]] && break
 
-    case "$line" in
-        # agi_arg_1 = sender number, agi_arg_2 = datetime, agi_arg_3 = message text
-        agi_arg_1:*)  SENDER="${line#agi_arg_1: }"  ;;
-        agi_arg_2:*)  DATETIME="${line#agi_arg_2: }" ;;
-        agi_arg_3:*)  MESSAGE="${line#agi_arg_3: }"  ;;
-    esac
+    if [[ "$line" == agi_arg_1:* ]]; then
+        SENDER="${line#agi_arg_1: }"
+    elif [[ "$line" == agi_arg_2:* ]]; then
+        DATETIME="${line#agi_arg_2: }"
+    elif [[ "$line" == agi_arg_*:* ]]; then
+        # agi_arg_3, agi_arg_4, ... — собираем все части сообщения
+        MESSAGE_PARTS+=("${line#*: }")
+    fi
 done
+
+# Склеиваем части обратно запятыми (ими Asterisk разделил аргументы)
+if [[ ${#MESSAGE_PARTS[@]} -gt 0 ]]; then
+    MESSAGE=$(IFS=,; echo "${MESSAGE_PARTS[*]}")
+fi
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 exec "${SCRIPT_DIR}/asterisk_sms_to_matrix.sh" "$SENDER" "$DATETIME" "$MESSAGE" </dev/null
